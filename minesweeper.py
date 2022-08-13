@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import numpy as np
 import random
 import time
@@ -7,16 +8,28 @@ import matplotlib.patches as patches
 class MW_Grid:
     ''' minesweeper grid containing all fields'''
 
-    def __init__(self,
-                 size: tuple = (16, 16), num_of_bombs: int = 40) -> None:
+    @classmethod
+    def beginner(cls):
+        return cls((9, 9), 10)
+    
+    @classmethod
+    def intermediate(cls):
+        return cls((16, 16), 40)
+    
+    @classmethod 
+    def hard(cls):
+        return cls((30, 16), 99)
+
+
+    def __init__(self, size: tuple[int,int], num_of_bombs: int) -> None:
         self.size = size
         self.num_of_bombs = num_of_bombs
         self.fields = self.initialize_grid()
-        self.ax = self.plot_init()
+        self.fig, self.ax = self.plot_init()
         self.first_move()
 
         self.game_over = False
-        self.main_loop()
+        self.fig.canvas.mpl_connect('button_press_event', self.user_interaction)
         plt.show()
 
     def initialize_grid(self) -> dict:
@@ -61,14 +74,7 @@ class MW_Grid:
         ax.set_yticks([])
         ax.set_facecolor('gainsboro')
         plt.tight_layout()
-        return ax
-        
-        '''
-        while True:
-            coords = plt.ginput(1)[0]
-            coords = tuple([round(c) for c in coords])
-            self.fields[coords].reveal()
-        '''
+        return fig, ax
 
     def first_move(self) -> None:
         ''' distribute bombs after first click'''
@@ -96,22 +102,25 @@ class MW_Grid:
         for idx in no_bombs_idx:
             print('tile removed')
             self.fields[idx].reveal()
-    
-    def main_loop(self) -> None:
-        while not self.game_over:
-            picked_tile = plt.ginput(1, timeout=0)[0]
-            picked_tile = tuple([round(c) for c in picked_tile])
-            self.fields[picked_tile].reveal()
-
-
-
+        self.fig.canvas.draw()
     
     def reveal_all_fields(self):
         ''' reveal all tiles from the fields'''
         for field in self.fields.values():
-            field.remove_tile()
+            if not field.flagged:
+                field.remove_tile()
+        self.fig.canvas.draw()
 
 
+    def user_interaction(self, event) -> None:
+        ''' reveal or flag a field'''
+        idx = (round(event.xdata), round(event.ydata))
+        if event.button == 1:
+            self.fields[idx].reveal()
+
+        elif event.button == 3:
+            self.fields[idx].flag_tile(self.ax)
+        self.fig.canvas.draw()
         
 
         
@@ -140,6 +149,7 @@ class Field:
         self.position = position
         self.is_bomb = is_bomb
         self.revealed = False
+        self.flagged = False
     
     def count_surrounding_bombs(self) -> None:
         ''' count the bombs in the nearest neighborhood'''
@@ -189,18 +199,36 @@ class Field:
             fontweight = 'bold'
         )
 
-
     def plot_tile(self, ax: plt.Axes) -> None:
         ''' plot field to matplotlib axes'''
         self.tile = patches.Rectangle((self.position[0]-0.5, self.position[1]-0.5), 1, 1, fc='grey', zorder=10)
         ax.add_patch(self.tile)
     
+    def flag_tile(self, ax: plt.Axes) -> None:
+        ''' flag or unflag tile'''
+        if not self.flagged and not self.revealed:
+            self.flagged = True
+            self.flag = ax.text(
+                self.position[0],
+                self.position[1],
+                u'\u2691',
+                fontsize = 14,
+                va = 'center',
+                ha = 'center',
+                color = 'white',
+                zorder = 30
+            )
+            print(f'flagged field {self.position}')
+        elif self.flagged:
+            self.flagged = False
+            self.flag.remove()
+            print(f'removed flag on field {self.position}')
+    
     def reveal(self) -> None:
         ''' reveal if field is bomb and remove tile'''
-        if not self.revealed:
+        if not self.revealed and not self.flagged:
             self.revealed = True
             self.tile.remove()
-            plt.draw()
 
             if self.is_bomb:
                 print(f'Bomb on field {self.position} exploded!')
@@ -208,7 +236,6 @@ class Field:
                 self.grid.game_over = True
             elif self.surrounding_bombs == 0:
                 # recursively reveal all other tiles
-                print(f'try to remove tile {self.position}')
                 for nn in self.get_nearest_neighbors():
                     if not self.grid.fields[nn].revealed:
                         self.grid.fields[nn].reveal()
@@ -221,12 +248,12 @@ class Field:
         if not self.revealed:
             self.revealed = True
             self.tile.remove()
-            plt.draw()
+            
         
 
 
 if __name__ == '__main__':
-    test = MW_Grid()
+    test = MW_Grid.hard()
 
     
 
