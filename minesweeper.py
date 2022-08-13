@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
 import random
-import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -29,6 +28,7 @@ class MW_Grid:
         self.first_move()
 
         self.game_over = False
+        self.num_flags = self.num_of_bombs + 0
         self.fig.canvas.mpl_connect('button_press_event', self.user_interaction)
         plt.show()
 
@@ -73,6 +73,13 @@ class MW_Grid:
         ax.set_ylabel('')
         ax.set_yticks([])
         ax.set_facecolor('gainsboro')
+        ax.set_title(
+            f'remaining flags: {self.num_of_bombs}/{self.num_of_bombs}', 
+            loc='left', 
+            fontweight='bold', 
+            fontsize=14, 
+            pad=10
+        )
         plt.tight_layout()
         return fig, ax
 
@@ -117,10 +124,19 @@ class MW_Grid:
         idx = (round(event.xdata), round(event.ydata))
         if event.button == 1:
             self.fields[idx].reveal()
-
         elif event.button == 3:
             self.fields[idx].flag_tile(self.ax)
         self.fig.canvas.draw()
+    
+    def update_title(self) -> None:
+        ''' update the title with status information'''
+        self.ax.set_title(
+            f'remaining flags: {self.num_flags}/{self.num_of_bombs}', 
+            loc='left', 
+            fontweight='bold', 
+            fontsize=14,
+            pad=10
+        )
         
 
         
@@ -201,7 +217,11 @@ class Field:
 
     def plot_tile(self, ax: plt.Axes) -> None:
         ''' plot field to matplotlib axes'''
-        self.tile = patches.Rectangle((self.position[0]-0.5, self.position[1]-0.5), 1, 1, fc='grey', zorder=10)
+        self.tile = patches.Rectangle(
+            (self.position[0]-0.5, self.position[1]-0.5), 1, 1, 
+            fc='grey', 
+            zorder=10
+        )
         ax.add_patch(self.tile)
     
     def flag_tile(self, ax: plt.Axes) -> None:
@@ -219,10 +239,13 @@ class Field:
                 zorder = 30
             )
             print(f'flagged field {self.position}')
+            self.grid.num_flags -=1
         elif self.flagged:
             self.flagged = False
             self.flag.remove()
             print(f'removed flag on field {self.position}')
+            self.grid.num_flags +=1
+        self.grid.update_title()
     
     def reveal(self) -> None:
         ''' reveal if field is bomb and remove tile'''
@@ -253,7 +276,7 @@ class Field:
 
 
 if __name__ == '__main__':
-    test = MW_Grid.hard()
+    test = MW_Grid.intermediate()
 
     
 
