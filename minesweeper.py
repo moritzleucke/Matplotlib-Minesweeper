@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import numpy as np
 import random
-import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -330,7 +329,7 @@ class Field:
 
 
 if __name__ == '__main__':
-    test = MW_Grid.intermediate()
+    test = MW_Grid(size=(40, 10), num_of_bombs=40)
 
     
 
