@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import random
+import time
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -25,11 +26,12 @@ class MW_Grid:
         self.num_of_bombs = num_of_bombs
         self.fields = self.initialize_grid()
         self.fig, self.ax = self.plot_init()
+        self.num_tiles_left = size[0]*size[1]
         self.first_move()
 
         self.game_over = False
         self.num_flags = self.num_of_bombs + 0
-        self.fig.canvas.mpl_connect('button_press_event', self.user_interaction)
+        cid = self.fig.canvas.mpl_connect('button_press_event', self.user_interaction)
         plt.show()
 
     def initialize_grid(self) -> dict:
@@ -134,6 +136,36 @@ class MW_Grid:
             f'remaining flags: {self.num_flags}/{self.num_of_bombs}', 
             loc='left', 
             fontweight='bold', 
+            fontsize=14,
+            pad=10
+        )
+    
+    def count_unopened_tiles(self) -> int:
+        ''' count the tiles that aren't removed yet'''
+        tiles_left = 0
+        for field in self.fields:
+            if not field.revealed: 
+                tiles_left +=1
+        return tiles_left
+    
+    def plot_win_screen(self) -> None:
+        ''' display if user wins'''
+        self.ax.set_title(
+            f'You won!', 
+            loc='left', 
+            fontweight='bold', 
+            color = 'green',
+            fontsize=14,
+            pad=10
+        )
+    
+    def plot_game_over_screen(self) -> None:
+        ''' display if user lost the game'''
+        self.ax.set_title(
+            f'Game over!', 
+            loc='left', 
+            fontweight='bold', 
+            color = 'red',
             fontsize=14,
             pad=10
         )
@@ -252,18 +284,25 @@ class Field:
         if not self.revealed and not self.flagged:
             self.revealed = True
             self.tile.remove()
+            self.grid.num_tiles_left -=1
 
             if self.is_bomb:
                 print(f'Bomb on field {self.position} exploded!')
                 self.grid.reveal_all_fields()
                 self.grid.game_over = True
+                self.grid.plot_game_over_screen()
             elif self.surrounding_bombs == 0:
                 # recursively reveal all other tiles
                 for nn in self.get_nearest_neighbors():
                     if not self.grid.fields[nn].revealed:
                         self.grid.fields[nn].reveal()
+            elif self.grid.num_tiles_left == self.grid.num_of_bombs:
+                # game ended: winning
+                self.grid.game_over = True
+                self.grid.plot_win_screen()
             else:
                 print(f'clicked on field {self.position}: no bomb')
+            
 
     
     def remove_tile(self) -> None:
@@ -276,7 +315,7 @@ class Field:
 
 
 if __name__ == '__main__':
-    test = MW_Grid.intermediate()
+    test = MW_Grid.beginner()
 
     
 
