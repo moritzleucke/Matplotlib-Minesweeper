@@ -187,8 +187,6 @@ class Field:
         6 : 'turquoise',
         7 : 'grey',
         8 : 'black',
-        '*' : 'k',
-        'X' : 'k',
         u'\u2738': 'k'
     }
     
@@ -279,7 +277,7 @@ class Field:
             self.grid.num_flags +=1
         self.grid.update_title()
     
-    def reveal(self) -> None:
+    def reveal(self, recursive=True) -> None:
         ''' reveal if field is bomb and remove tile'''
         if not self.revealed and not self.flagged:
             self.revealed = True
@@ -302,6 +300,23 @@ class Field:
                 self.grid.plot_win_screen()
             else:
                 print(f'clicked on field {self.position}: no bomb')
+
+        
+        elif self.revealed and recursive:
+            # reveal sourrounding fields
+            if self.check_matching_sourrounding_flags():
+                print('something went wrong')
+                for nn in self.get_nearest_neighbors():
+                    self.grid.fields[nn].reveal(recursive=False)
+
+    
+    def check_matching_sourrounding_flags(self) -> bool:
+        ''' check if souurrounding flags is matching the num of sourr. bombs'''
+        flags = 0
+        for nn in self.get_nearest_neighbors():
+            if self.grid.fields[nn].flagged:
+                flags +=1
+        return (flags == self.surrounding_bombs)
             
 
     
@@ -315,7 +330,7 @@ class Field:
 
 
 if __name__ == '__main__':
-    test = MW_Grid.beginner()
+    test = MW_Grid.intermediate()
 
     
 
