@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import random
+import time 
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
@@ -87,6 +88,7 @@ class MW_Grid:
     def first_move(self) -> None:
         ''' distribute bombs after first click'''
         first_pick = plt.ginput(1)[0]
+        self.start_time = time.time()
         first_pick = tuple([round(c) for c in first_pick])
          # nearest neighbours of first pick
         no_bombs_idx = self.fields[first_pick].get_nearest_neighbors()
@@ -149,9 +151,18 @@ class MW_Grid:
     
     def plot_win_screen(self) -> None:
         ''' display if user wins'''
+        game_time = time.time() - self.start_time
         self.ax.set_title(
             f'You won!', 
             loc='left', 
+            fontweight='bold', 
+            color = 'green',
+            fontsize=14,
+            pad=10
+        )
+        self.ax.set_title(
+            f'{game_time:.0f} s',
+            loc='right',
             fontweight='bold', 
             color = 'green',
             fontsize=14,
@@ -300,11 +311,9 @@ class Field:
             else:
                 print(f'clicked on field {self.position}: no bomb')
 
-        
         elif self.revealed and recursive:
             # reveal sourrounding fields
             if self.check_matching_sourrounding_flags():
-                print('something went wrong')
                 for nn in self.get_nearest_neighbors():
                     self.grid.fields[nn].reveal(recursive=False)
 
@@ -329,7 +338,8 @@ class Field:
 
 
 if __name__ == '__main__':
-    test = MW_Grid(size=(40, 10), num_of_bombs=40)
+    #test = MW_Grid.intermediate()
+    MW_Grid((16, 16), 10)
 
     
 

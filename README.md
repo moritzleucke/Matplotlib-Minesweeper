@@ -6,6 +6,7 @@ A simple minesweeper implementation in the python matplotlib library.
 - right click: flag a tile
 - at least 9 blank tiles at the first pick
 - click on a number: reveal all surrounding tiles if number of flags equals the number of surrounding bombs
+- time tracker: time is shown at the end when a player wins
 
 ## Prerequisites
 - python >= 3.10
